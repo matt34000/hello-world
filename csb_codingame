@@ -1,0 +1,421 @@
+import java.util.*;
+import java.io.*;
+import java.math.*;
+
+/**
+ *****************************************************************
+ *    compétition "Coders Strike Back" du site codingame.com     *
+ *    par Matt_Java_34                             Aout 2019     *
+ *    en cours de développement...                               *
+ *****************************************************************
+ * 
+ **/
+ 
+ 
+ // a utiliser plus tard : calcul d'angle sur 2 vecteurs :
+ // atan2(v1.y, v1.x) - atan2(v2.y, v2.x) 
+ 
+ 
+ 
+ 
+class Player {
+
+    public static void main(String args[]) {
+
+        Scanner in = new Scanner(System.in);
+        
+
+        // parametres de depart :        
+
+        boolean BoostEffectue = false;
+        // le boost ne doit etre utilise qu une seule fois
+        // une fois qu'il aura été utilisé sa valeur passera à true
+
+        
+        String thurst = "100"; 
+        // puissance des moteurs comprise entre 0 et 100, la variable est de type string
+        // parcequ elle peut prendre la valeur texte "boost"
+
+
+                    
+                    // vitesse : cette fonctionalité n'est plus utilisée
+                    // je l'ai laissée pour montrer ce que j'avais fait avant
+                    // --------------------------------------------------------------
+
+                    int comptetour = 1;
+                    // nombre de tours de la boucle pour le calcul temporaire de la vitesse
+
+                    // sur 3 tours de boucle pour calculer la vitesse des deux vaisseaux
+                    int vitesseA = 0;
+                    double shortdistA = 0.0;
+                    int vitesseB = 0;
+                    double shortdistB = 0.0;
+            
+                    // distances parcourues sur 3 tours de boucle pour calculer la vitesse des deux vaisseaux
+                    double distck2ck = 0.0;
+                    int distck2cki = 0;
+                    int lastckdist = 0;
+                    
+                    // j'affichais la vitesse des deux vaisseaux dans mon étiquette texte
+                    // ---------------------------------------------------------------
+
+        
+        // comptabilisation du nombre total de checkpoints
+        int finalk = 0;
+        int finalk2 = 0;
+        
+        // enregistrement temporaire position vaisseau A (moi) et B (adversaire)
+        int xa = 0;
+        int ya = 0;
+        int xb = 0;
+        int yb = 0;
+
+
+
+        // ci-dessous utilisation de 3 arraylist : la taille n'est pas connue à l'avance
+        
+        // arraylist : coordonnees des checkpoints
+        ArrayList<Integer> ckloc = new ArrayList<Integer>();
+        
+        // arraylist : distances entre les checkpoints
+        ArrayList<Integer> ckdist = new ArrayList<Integer>();
+        
+        // arraylist : angle entre deux routes
+        // plus l'angle est fort plus on va réduire la puissance pour mieux gérer le virage
+        // si l'angle est trop fort il faut réduire la puissance au risque de louper le checkpoint
+        // et de tourner autour un moment
+        ArrayList<Integer> ckangle = new ArrayList<Integer>();
+
+        
+        boolean ckdetected = false; // checkpoint detecté
+        boolean ckfull = false; // devient égal à true si on connait tous les checkpoints
+        int newpos = 0;
+
+        // sorties texte temporaire
+        String cktexte = "";
+        String cktexte2 = "";
+        String cktexte3 = "";
+        String cktexte4 = "";
+        String cktexte5 = "";
+        String cktexte6 = "";
+        String cktexte7 = "";
+
+
+        boolean dejafait = false;
+        boolean dejafait2 = false;
+
+        int oldckdist = 0;
+
+        int checkpointcourant = 0;
+        
+        int PlusLongueDistIndex = 0;
+        int PlusLongueDistValeur = 0;
+        
+
+        String boo = "";
+
+        boolean ModeBarres = false; 
+        // true : optionnel : affichage de la puissance du vaisseau sous forme graphique
+        // dans l'étiquette texte du vaisseau
+
+
+
+
+        // game loop
+        while (true) {
+            int x = in.nextInt(); // x position of your pod
+            int y = in.nextInt(); // y position of your pod
+        
+            int nextCheckpointX = in.nextInt(); // x position of the next check point
+            int nextCheckpointY = in.nextInt(); // y position of the next check point
+                                    
+            int nextCheckpointDist = in.nextInt();
+            int nextCheckpointAngle = in.nextInt();
+            
+            int opponentX = in.nextInt();
+            int opponentY = in.nextInt();
+
+
+                            // calcul de la vitesse des deux vaisseaux sur 3 tours de boucle
+                            // ce code ne sert plus, ca m'a servi temporairement à voir ma vitesse et
+                            //celle de mon adversaire dans mon étiquette texte au dessus de mon vaisseau
+                            
+                            comptetour ++;            
+                
+                            if (comptetour % 3 == 0 || comptetour == 1)
+                            {
+        
+                                    // calcul des distances parcourues
+                                    shortdistA = Math.sqrt(Math.pow((x - xa), 2.0) + Math.pow((y - ya), 2.0));                    
+                                    shortdistB = Math.sqrt(Math.pow((opponentX - xb), 2.0) + Math.pow((opponentY - yb), 2.0));
+                                    
+                                   
+                                    
+                                    // calcul des vitesses pour chaque vaisseau        
+                                    vitesseA = (int) Math.round(shortdistA / 3.0);  // mon vaisseau              
+                                    vitesseB = (int) Math.round(shortdistB / 3.0);  // adversaire
+                                    
+
+                
+                                    // coordonnees temporaires pour le prochain calcul dans 3 tours       
+                                      xa = x;
+                                      ya = y;
+                                      xb = opponentX;
+                                      yb = opponentY;
+                                
+                            }
+
+
+                // enregistrement de la position des checkpoints dans un arraylist
+                // une fois le premier tour de circuit effectue on connait alors
+                // la position et la distance entre les checkpoints
+                // ce qui permet deux choses :
+                // 1 - calculer le meilleur angle de virage sur chaque checkpoint
+                // 2 - mettre le coup de boost au meilleur moment sur la plus longue distance
+
+
+                //if (ckfull == false) { // si on ne connais pas encore tous les checkpoints
+
+                    
+                        ckdetected = false;
+                        
+                        // on check si un nouveau checkpoint est deja present dans l'arraylist ckloc :
+
+                        for (int k = 0; k < ckloc.size(); k++) {
+
+                            System.err.println("141: " + k + " " + ckloc.get(k));    
+                                          
+                            if (ckloc.get(k) == nextCheckpointX && ckloc.get(k+1) == nextCheckpointY) {
+                                
+                                ckdetected = true;
+                                
+                                // finalk2 = le nombre total de checkpoint
+                                if (k >= finalk) {
+                                    finalk = k;
+                                    finalk2 = k/2 + 1;
+                                    //System.err.println("151: k:" + k + " finalk:" + finalk + " finalk2:" + finalk2);
+                                }
+                                else if (k < finalk) {                                 
+                                     ckfull = true; // on a alors tous les checkpoint connus
+                                     //System.err.println("155: ckfull:" + ckfull);
+                                }
+                                
+                                                                
+                                // je sais sur quelle route se trouve mon vaisseau
+                                checkpointcourant = k/2 + 1;
+                                System.err.println("160: route trouvée : (" + ckloc.get(k) + "," + ckloc.get(k+1) + ") checkpoint No : " + checkpointcourant + "/" + finalk2);                                
+                                                               
+                            }
+                                
+                            if (ckloc.get(k) != 0) {
+                                newpos = k+1;                            
+                            }
+                                                    
+                        } // fin de boucle for k
+
+    
+                        
+                if (ckfull == false) { // on ajoute des coordonnees de checkpoints si le tour du circuit est pas fini
+                        
+                        if (ckdetected == false) {
+                                
+                                // on enregistre les coordonnées d'un nouveau checkpoint dans l'arraylist ckloc
+                                ckloc.add(nextCheckpointX);
+                                ckloc.add(nextCheckpointY);
+                                //cktexte3 += ckloc.get(newpos) + "," + ckloc.get(newpos+1) + ",";
+                                //System.err.println("(165) " + cktexte3);
+                                
+                        }
+                        
+
+
+
+
+                }                
+
+                else if (ckfull == true) {
+                    
+                    // après avoir fait un tour de circuit on connait les coordonnées des checkpoints
+                    // on peut alors calculer la distance entre chaque checkpoint
+
+                    
+                            
+                    System.err.println("226: ckloc.size:" + ckloc.size() + " finalk2:" + finalk2);
+
+ 
+
+
+                        for (int m = 0; m < ckloc.size() - 2; m += 2) {
+
+
+                  
+                            // coordonnees de deux checkpoints qui se suivent
+                            int coXa = ckloc.get(m);
+                            int coYa = ckloc.get(m+1);
+                            int coXb = ckloc.get(m+2);
+                            int coYb = ckloc.get(m+3);
+                            
+                            System.err.println("241: m: " + m + " coXa:" + coXa + " coYa:" + coYa + " coXb:" + coXb + " coYb:" + coYb);
+                            
+                            // calcul de distance entre deux checkpoints
+                            distck2ck = Math.sqrt(Math.pow((coXa - coXb), 2.0) + Math.pow((coYa - coYb), 2.0)); 
+                            distck2cki = (int) Math.round(distck2ck);
+          
+                            System.err.println("247: m: " + m + " distck2cki:" + distck2cki);
+                            
+                            // enregistrement des distances dans l'arraylist ckdist
+
+                            if (distck2cki != lastckdist ) {
+                                    
+                                    ckdist.add(distck2cki); 
+                                    
+                                    System.err.println("255: m: " + m);
+                                    
+                                    //System.err.println("257: ckdist:" + ckdist.get(m));
+                                    
+                                    
+                                    lastckdist = distck2cki;
+                            }
+                            
+                        
+                        }
+                        
+                           
+                            // liste des coordonnées checkpoints + distances entre checkpoints                            
+                            if(!dejafait) {
+
+                                    for (Integer o : ckloc) {
+                                        cktexte4 += o + ",";
+                                    }
+
+                                    for (Integer p : ckdist) {
+                                        cktexte5 += p + ",";
+                                    }
+
+                                    dejafait = true;
+                            }
+                            
+                            System.err.println("279: cktexte4:" + cktexte4);
+                            System.err.println("280: cktexte5:" + cktexte5);
+                            
+
+
+                } 
+
+
+
+
+
+
+            int absCA = Math.abs(nextCheckpointAngle);
+            
+            double PCabsCA = 100.0 - (((absCA / 180.0) * 100.0)/3) ;
+            int PCabsCA2 = (int) Math.round(PCabsCA);
+            PCabsCA2 = Math.abs(PCabsCA2);
+            thurst = Integer.toString(PCabsCA2);
+            //thurst = Integer.toString(100);
+
+            // en fonction de l'angle absolu de direction on defini la puissance du moteur
+            // si on mettait le moteur à 100% de la puissance on perdrait du temps dans les virages
+
+            
+                
+
+
+
+                    // on met un coup de boost au meilleur moment
+                    // des le départ si le prochain checkpoint est loin > 5000 de distance
+
+                    //if ((nextCheckpointDist > 6000) && (BoostEffectue == false)) { 
+                        //thurst = "BOOST";
+                        //BoostEffectue = true;
+                        //boo = "B1";
+                        //}
+
+
+                    // sinon on étudie le circuit au 1er tour pour donner un coup de boost au 2eme tour
+                    for (int r = 0; r < ckdist.size(); r++) {
+                    
+                        if (ckdist.get(r) > PlusLongueDistValeur) {
+                        
+                            PlusLongueDistIndex = r;
+                            PlusLongueDistValeur = ckdist.get(r);
+                        
+                        }
+                                                
+                    }
+                    
+                    //cktexte6 = PlusLongueDistIndex + ":" + PlusLongueDistValeur;
+                    //System.err.println("329: cktexte6:" + cktexte6);
+                    
+                    //cktexte7 = checkpointcourant + " " + PlusLongueDistIndex;
+                    //System.err.println("332: cktexte7:" + cktexte7);                    
+                    
+                    
+                    // ici on a beaucoup de conditions pour que le boost soit réussi :
+                    // le boost n'a pas été déjà effectué, on est au 2eme tour,
+                    // on est sur la plus longue distance entre deux checkpoints
+                    // on attend au moins 1000 de distance parcourue avant de lancer le boost
+                    // histoire que le vaisseau soit bien droit d'abord
+                    // on ne lance le boost que si la distance est supérieure à 5000
+                    // et l'angle de direction inférieur à 30 degrés
+                    if ((BoostEffectue == false) && (ckfull == true) && (checkpointcourant == PlusLongueDistIndex) && (nextCheckpointDist < (PlusLongueDistValeur - 1000)) && (nextCheckpointDist > 4000) && (absCA < 45) ) { 
+                        
+                        thurst = "BOOST";
+                        BoostEffectue = true;
+                        boo = "B2";
+                        //System.err.println("354: BOOST !");
+                        }
+                    else {
+                        System.err.println("357: BoostEffectue:" + BoostEffectue + " ckfull:" + ckfull + " checkpointcourant:" + checkpointcourant + " PlusLongueDistIndex:" + PlusLongueDistIndex);
+                        System.err.println("358: nextCheckpointDist:" + nextCheckpointDist + " PlusLongueDistValeur:" + PlusLongueDistValeur + " absCA:" + absCA);
+                    }
+
+
+
+
+                    // freinage avant d'arriver sur le checkpoint
+                    if (nextCheckpointDist < 2000 && nextCheckpointDist >= 1000 ) { 
+                        thurst = Integer.toString(66);
+                        }
+
+                    if (nextCheckpointDist < 1000 && nextCheckpointDist >= 1 ) { 
+                        thurst = Integer.toString(55);
+                        }
+
+                    // on réduit la puissance du moteur si l'angle de direction est trop fort
+                    if (absCA > 75) { 
+                        thurst = Integer.toString(44);   
+                        }
+
+
+                 
+                        
+
+            // ModeBarres = true affiche la puissance du vaisseau de maniere graphique
+
+            if (ModeBarres == false)
+                { 
+                    System.out.println(nextCheckpointX + " " + nextCheckpointY + " " + thurst + " " + thurst + " " + boo);
+                    //System.out.println(nextCheckpointX + " " + nextCheckpointY + " " + thurst + " " + thurst + " " + boo);
+                }
+            else if (ModeBarres == true)
+                {
+                                        
+                    int thurst2 = Integer.parseInt(thurst);
+                    int thurstitem = Math.round(thurst2 / 5);
+                    String barres = "|";
+                        for (int j = 0; j < thurstitem; j++) {
+                        barres += "|";
+                        }
+                    System.out.println(nextCheckpointX + " " + nextCheckpointY + " " + thurst + " " + barres );                            
+                }
+            
+
+
+        }
+    }
+}
+
+
+
