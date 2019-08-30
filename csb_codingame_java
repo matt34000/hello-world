@@ -6,14 +6,14 @@ import java.math.*;
  *****************************************************************
  *    compétition "Coders Strike Back" du site codingame.com     *
  *    par Matt_Java_34                             Aout 2019     *
- *    en cours de développement...                               *
+ *                                                               *
+ *    Avec cette dernière version je suis passé directement      *
+ *    du rang bronze au rang or sans passer par le rang argent   *
+ *    avec un score de 27,00                                     *
+ *    par contre mon code n'est pas optimal                      *
  *****************************************************************
  * 
  **/
- 
- 
- // a utiliser plus tard : calcul d'angle sur 2 vecteurs :
- // atan2(v1.y, v1.x) - atan2(v2.y, v2.x) 
  
  
  
@@ -31,10 +31,13 @@ class Player {
         // le boost ne doit etre utilise qu une seule fois
         // une fois qu'il aura été utilisé sa valeur passera à true
 
-        
-        String thurst = "100"; 
+
         // puissance des moteurs comprise entre 0 et 100, la variable est de type string
         // parcequ elle peut prendre la valeur texte "boost"
+        // thursti est la conversion numérique de thurst
+        String thurst = "100";
+        int thursti = 100;
+
 
 
                     
@@ -72,7 +75,7 @@ class Player {
 
 
 
-        // ci-dessous utilisation de 3 arraylist : la taille n'est pas connue à l'avance
+        // utilisation de 3 arraylist : la taille n'est pas connue à l'avance
         
         // arraylist : coordonnees des checkpoints
         ArrayList<Integer> ckloc = new ArrayList<Integer>();
@@ -99,12 +102,22 @@ class Player {
         String cktexte5 = "";
         String cktexte6 = "";
         String cktexte7 = "";
+        String cktexte8 = "";
 
 
         boolean dejafait = false;
         boolean dejafait2 = false;
 
         int oldckdist = 0;
+
+        double angle = 0.0;
+        int anglei = 0;
+        
+        int prevX = 0;
+        int prevY = 0;
+        
+        double velX = 0.0;
+        double velY = 0.0;
 
         int checkpointcourant = 0;
         
@@ -113,6 +126,11 @@ class Player {
         
 
         String boo = "";
+
+
+        int dirX = 0;
+        int dirY = 0;
+
 
         boolean ModeBarres = false; 
         // true : optionnel : affichage de la puissance du vaisseau sous forme graphique
@@ -174,7 +192,7 @@ class Player {
                 // 2 - mettre le coup de boost au meilleur moment sur la plus longue distance
 
 
-                //if (ckfull == false) { // si on ne connais pas encore tous les checkpoints
+                
 
                     
                         ckdetected = false;
@@ -236,7 +254,7 @@ class Player {
                 else if (ckfull == true) {
                     
                     // après avoir fait un tour de circuit on connait les coordonnées des checkpoints
-                    // on peut alors calculer la distance entre chaque checkpoint
+                    // on peut alors calculer la distance et les angles entre chaque checkpoint
 
                     
                             
@@ -261,17 +279,33 @@ class Player {
                             distck2ck = Math.sqrt(Math.pow((coXa - coXb), 2.0) + Math.pow((coYa - coYb), 2.0)); 
                             distck2cki = (int) Math.round(distck2ck);
           
-                            System.err.println("247: m: " + m + " distck2cki:" + distck2cki);
+                            System.err.println("264: m: " + m + " distck2cki:" + distck2cki);
+
+
+                            // calcul des angles entre deux checkpoints
+                            angle = Math.atan2(coYa, coXa) - Math.atan2(coYb, coXb); // méthode atan2
+                            //angle = Math.atan(coYa/coXa) - Math.atan(coYb/coXb); // méthode atan
+                            //transformation des radians en degrés
+                            angle = angle * 180 / Math.PI;
+                            anglei = (int) Math.round(angle);
+                            //anglei = (int)angle;
+          
+                            System.err.println("271: m: " + m + " anglei:" + anglei);
+
                             
-                            // enregistrement des distances dans l'arraylist ckdist
+                            // enregistrement des distances et des angles dans les arraylist
 
                             if (distck2cki != lastckdist ) {
                                     
-                                    ckdist.add(distck2cki); 
+                                    ckdist.add(distck2cki);
                                     
-                                    System.err.println("255: m: " + m);
+                                    ckangle.add(anglei);
+                                    
+                                    //System.err.println("255: m: " + m);
                                     
                                     //System.err.println("257: ckdist:" + ckdist.get(m));
+                                    
+                                    //System.err.println("278: ckangle:" + ckangle.get(m));
                                     
                                     
                                     lastckdist = distck2cki;
@@ -281,7 +315,7 @@ class Player {
                         }
                         
                            
-                            // liste des coordonnées checkpoints + distances entre checkpoints                            
+                            // liste des coordonnées checkpoints + distances + angles entre checkpoints                            
                             if(!dejafait) {
 
                                     for (Integer o : ckloc) {
@@ -292,11 +326,17 @@ class Player {
                                         cktexte5 += p + ",";
                                     }
 
+                                    for (Integer s : ckangle) {
+                                        cktexte7 += s + ",";
+                                    }
+
                                     dejafait = true;
                             }
                             
-                            System.err.println("279: cktexte4:" + cktexte4);
-                            System.err.println("280: cktexte5:" + cktexte5);
+                            System.err.println("317: cktexte4:" + cktexte4);
+                            System.err.println("318: cktexte5:" + cktexte5);
+                            System.err.println("319: cktexte7:" + cktexte7);
+                            
                             
 
 
@@ -376,27 +416,49 @@ class Player {
 
                     // freinage avant d'arriver sur le checkpoint
                     if (nextCheckpointDist < 2000 && nextCheckpointDist >= 1000 ) { 
-                        thurst = Integer.toString(66);
+                        thurst = Integer.toString(70);
                         }
 
                     if (nextCheckpointDist < 1000 && nextCheckpointDist >= 1 ) { 
-                        thurst = Integer.toString(55);
+                        thurst = Integer.toString(50);
                         }
 
                     // on réduit la puissance du moteur si l'angle de direction est trop fort
                     if (absCA > 75) { 
-                        thurst = Integer.toString(44);   
+                        thurst = Integer.toString(40);   
                         }
 
+                    // au max au dessus de 85%
+                    
+                    if (thurst != "BOOST") {
+                            thursti = Integer.parseInt(thurst);
+                            if (thursti >= 85) { 
+                                thurst = Integer.toString(100);   
+                                }
+                    }
 
+
+
+            if (prevX !=0) {
+            velX = x - prevX;
+            velY = y - prevY;
+            }
+            
+            prevX = x;
+            prevY = y;
                  
+            // direction à prendre (compensée)
+            dirX = (int) (nextCheckpointX - (velX * 3));
+            dirY = (int) (nextCheckpointY - (velY * 3));
+
+
                         
 
             // ModeBarres = true affiche la puissance du vaisseau de maniere graphique
 
             if (ModeBarres == false)
                 { 
-                    System.out.println(nextCheckpointX + " " + nextCheckpointY + " " + thurst + " " + thurst + " " + boo);
+                    System.out.println(dirX + " " + dirY + " " + thurst + " " + thurst + " " + boo);
                     //System.out.println(nextCheckpointX + " " + nextCheckpointY + " " + thurst + " " + thurst + " " + boo);
                 }
             else if (ModeBarres == true)
@@ -408,7 +470,7 @@ class Player {
                         for (int j = 0; j < thurstitem; j++) {
                         barres += "|";
                         }
-                    System.out.println(nextCheckpointX + " " + nextCheckpointY + " " + thurst + " " + barres );                            
+                    System.out.println(dirX + " " + dirY + " " + thurst + " " + barres );                            
                 }
             
 
